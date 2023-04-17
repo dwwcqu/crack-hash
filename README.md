@@ -21,3 +21,4 @@
 ## *crack-hash* 相对 hashcat 的改动
 
 1. *hashcat* 使用 `make` 作为其构建工具，能在各类 *unix-based* 系统、*CYGWIN*、*MSYS* 和 *WSL* 上进行构建，在 *crack-hash* 中，使用 `cmake` 作为构建工具，目前只支持 *unix-based* 系统上的构建；
+2. 目前不支持 `cmake` 的交叉编译(*cross compile*)；
