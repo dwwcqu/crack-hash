@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_ADL_H
 #define HC_EXT_ADL_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #include <string.h>
 #include <stdlib.h>
 
@@ -658,5 +660,7 @@ int hm_ADL_Overdrive6_FanSpeed_Get (void *hashcat_ctx, int iAdapterIndex, ADLOD6
 int hm_ADL_Overdrive_Caps (void *hashcat_ctx, int iAdapterIndex, int *od_supported, int *od_enabled, int *od_version);
 int hm_ADL2_Overdrive_Caps (void *hashcat_ctx, int iAdapterIndex, int *od_supported, int *od_enabled, int *od_version);
 int hm_ADL2_New_QueryPMLogData_Get (void *hashcat_ctx, int iAdapterIndex, ADLPMLogDataOutput *lpDataOutput);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_ADL_H

@@ -22,7 +22,9 @@ static const char CL_VENDOR_INTEL_SDK[]         = "Intel(R) Corporation";
 static const char CL_VENDOR_MESA[]              = "Mesa";
 static const char CL_VENDOR_NV[]                = "NVIDIA Corporation";
 static const char CL_VENDOR_POCL[]              = "The pocl project";
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int  backend_ctx_init                       (hashcat_ctx_t *hashcat_ctx);
 void backend_ctx_destroy                    (hashcat_ctx_t *hashcat_ctx);
 
@@ -93,5 +95,7 @@ int run_cracker                             (hashcat_ctx_t *hashcat_ctx, hc_devi
 
 void *hook12_thread (void *p);
 void *hook23_thread (void *p);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_BACKEND_H

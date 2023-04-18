@@ -5,7 +5,9 @@
 
 #ifndef HC_DISPATCH_H
 #define HC_DISPATCH_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #ifdef WITH_BRAIN
 #if defined (_WIN)
 #include <winsock.h>
@@ -24,5 +26,7 @@
 
 HC_API_CALL void *thread_calc_stdin (void *p);
 HC_API_CALL void *thread_calc (void *p);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_DISPATCH_H

@@ -14,9 +14,13 @@
 #include <windows.h>
 #include <psapi.h>
 #endif // _WIN
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int pidfile_ctx_init (hashcat_ctx_t *hashcat_ctx);
 
 void pidfile_ctx_destroy (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_PIDFILE_H

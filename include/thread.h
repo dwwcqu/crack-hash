@@ -73,7 +73,9 @@ void hc_signal (void (callback) (int));
 
 #endif
 */
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int mycracked (hashcat_ctx_t *hashcat_ctx);
 int myabort_runtime (hashcat_ctx_t *hashcat_ctx);
 int myabort_checkpoint (hashcat_ctx_t *hashcat_ctx);
@@ -85,5 +87,7 @@ int SuspendThreads (hashcat_ctx_t *hashcat_ctx);
 int ResumeThreads (hashcat_ctx_t *hashcat_ctx);
 int stop_at_checkpoint (hashcat_ctx_t *hashcat_ctx);
 int finish_after_attack (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_THREAD_H

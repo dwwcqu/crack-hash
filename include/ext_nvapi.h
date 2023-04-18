@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_NVAPI_H
 #define HC_EXT_NVAPI_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 /**
  * Declarations from nvapi.h and subheaders
  */
@@ -249,5 +251,7 @@ int hm_NvAPI_GPU_GetPerfPoliciesInfo (void *hashcat_ctx, NvPhysicalGpuHandle hPh
 int hm_NvAPI_GPU_GetPerfPoliciesStatus (void *hashcat_ctx, NvPhysicalGpuHandle hPhysicalGpu, NV_GPU_PERF_POLICIES_STATUS_PARAMS_V1 *perfPolicies_status);
 int hm_NvAPI_GPU_GetBusId (void *hashcat_ctx, NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pBusId);
 int hm_NvAPI_GPU_GetBusSlotId (void *hashcat_ctx, NvPhysicalGpuHandle hPhysicalGpu, NvU32 *pBusSlotId);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_NVAPI_H

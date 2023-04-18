@@ -7,7 +7,9 @@
 #define HC_USER_OPTIONS_H
 
 #include <getopt.h>
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int user_options_init (hashcat_ctx_t *hashcat_ctx);
 
 void user_options_destroy (hashcat_ctx_t *hashcat_ctx);
@@ -33,5 +35,7 @@ void user_options_logger (hashcat_ctx_t *hashcat_ctx);
 int user_options_check_files (hashcat_ctx_t *hashcat_ctx);
 
 void user_options_info (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_USER_OPTIONS_H

@@ -120,7 +120,9 @@ typedef struct hc_opencl_lib
 } hc_opencl_lib_t;
 
 typedef hc_opencl_lib_t OCL_PTR;
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 const char *val2cstr_cl          (cl_int CL_err);
 
 int  ocl_init                    (void *hashcat_ctx);
@@ -162,5 +164,7 @@ int hc_clWaitForEvents           (void *hashcat_ctx, cl_uint num_events, const c
 int hc_clGetEventProfilingInfo   (void *hashcat_ctx, cl_event event, cl_profiling_info param_name, size_t param_value_size, void *param_value, size_t *param_value_size_ret);
 int hc_clReleaseEvent            (void *hashcat_ctx, cl_event event);
 //int hc_clUnloadPlatformCompiler  (void *hashcat_ctx, cl_platform_id platform);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_OPENCL_H

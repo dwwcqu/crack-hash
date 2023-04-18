@@ -5,7 +5,9 @@
 
 #ifndef HC_EVENT_H
 #define HC_EVENT_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -26,5 +28,7 @@ __attribute__ ((format (printf, 2, 3))) size_t event_log_error      (hashcat_ctx
 
 int  event_ctx_init         (hashcat_ctx_t *hashcat_ctx);
 void event_ctx_destroy      (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EVENT_H

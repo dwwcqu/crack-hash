@@ -51,8 +51,12 @@ typedef struct extra_info_mask
   u32 out_len;
 
 } extra_info_mask_t;
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 void slow_candidates_seek (hashcat_ctx_t *hashcat_ctx, void *extra_info, const u64 cur, const u64 end);
 void slow_candidates_next (hashcat_ctx_t *hashcat_ctx, void *extra_info);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_SLOW_CANDIDATES_H

@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_NVRTC_H
 #define HC_EXT_NVRTC_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 /**
  * from cuda.h (/usr/local/cuda-10.1/targets/x86_64-linux/include/nvrtc.h)
  */
@@ -95,5 +97,7 @@ int hc_nvrtcGetProgramLog      (void *hashcat_ctx, nvrtcProgram prog, char *log)
 int hc_nvrtcGetPTXSize         (void *hashcat_ctx, nvrtcProgram prog, size_t *ptxSizeRet);
 int hc_nvrtcGetPTX             (void *hashcat_ctx, nvrtcProgram prog, char *ptx);
 int hc_nvrtcVersion            (void *hashcat_ctx, int *major, int *minor);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_NVRTC_H

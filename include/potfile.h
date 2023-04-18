@@ -12,7 +12,9 @@
 #include <search.h>
 
 #define INCR_POT 1000
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int  potfile_init             (hashcat_ctx_t *hashcat_ctx);
 int  potfile_read_open        (hashcat_ctx_t *hashcat_ctx);
 void potfile_read_close       (hashcat_ctx_t *hashcat_ctx);
@@ -31,5 +33,7 @@ void pot_tree_destroy      (pot_tree_entry_t *tree);
 
 int  sort_pot_tree_by_hash (const void *v1, const void *v2);
 int  sort_pot_orig_line    (const void *v1, const void *v2);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_POTFILE_H

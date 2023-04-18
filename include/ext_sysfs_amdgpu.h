@@ -23,7 +23,9 @@ typedef struct hm_sysfs_amdgpu_lib
 } hm_sysfs_amdgpu_lib_t;
 
 typedef hm_sysfs_amdgpu_lib_t SYSFS_AMDGPU_PTR;
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 bool sysfs_amdgpu_init (void *hashcat_ctx);
 void sysfs_amdgpu_close (void *hashcat_ctx);
 char *hm_SYSFS_AMDGPU_get_syspath_device (void *hashcat_ctx, const int backend_device_idx);
@@ -34,5 +36,7 @@ int hm_SYSFS_AMDGPU_get_pp_dpm_sclk (void *hashcat_ctx, const int backend_device
 int hm_SYSFS_AMDGPU_get_pp_dpm_mclk (void *hashcat_ctx, const int backend_device_idx, int *val);
 int hm_SYSFS_AMDGPU_get_pp_dpm_pcie (void *hashcat_ctx, const int backend_device_idx, int *val);
 int hm_SYSFS_AMDGPU_get_gpu_busy_percent (void *hashcat_ctx, const int backend_device_idx, int *val);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_SYSFS_AMDGPU_H

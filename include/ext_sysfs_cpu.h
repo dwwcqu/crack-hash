@@ -45,7 +45,9 @@ typedef struct
 } proc_stat_t;
 
 typedef hm_sysfs_cpu_lib_t SYSFS_CPU_PTR;
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 bool sysfs_cpu_init (void *hashcat_ctx);
 void sysfs_cpu_close (void *hashcat_ctx);
 char *hm_SYSFS_CPU_get_syspath_hwmon ();
@@ -53,5 +55,7 @@ int hm_SYSFS_CPU_get_temperature_current (void *hashcat_ctx, int *val);
 
 bool read_proc_stat (void *hashcat_ctx, proc_stat_t *proc_stat);
 int hm_SYSFS_CPU_get_utilization_current (void *hashcat_ctx, int *val);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_SYSFS_CPU_H

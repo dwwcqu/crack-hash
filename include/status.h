@@ -9,7 +9,9 @@
 #include <stdio.h>
 #include <time.h>
 #include <inttypes.h>
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 double get_avg_exec_time (hc_device_param_t *device_param, const int last_num_entries);
 
 // should be static after refactoring
@@ -125,5 +127,7 @@ int         status_ctx_init                           (hashcat_ctx_t *hashcat_ct
 void        status_ctx_destroy                        (hashcat_ctx_t *hashcat_ctx);
 
 void        status_status_destroy                     (hashcat_ctx_t *hashcat_ctx, hashcat_status_t *hashcat_status);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_STATUS_H

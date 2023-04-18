@@ -5,7 +5,9 @@
 
 #ifndef HC_HASHCAT_H
 #define HC_HASHCAT_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int   hashcat_init               (hashcat_ctx_t *hashcat_ctx, void (*event) (const u32, struct hashcat_ctx *, const void *, const size_t));
 void  hashcat_destroy            (hashcat_ctx_t *hashcat_ctx);
 
@@ -21,5 +23,7 @@ int   hashcat_session_destroy    (hashcat_ctx_t *hashcat_ctx);
 
 char *hashcat_get_log            (hashcat_ctx_t *hashcat_ctx);
 int   hashcat_get_status         (hashcat_ctx_t *hashcat_ctx, hashcat_status_t *hashcat_status);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_HASHCAT_H

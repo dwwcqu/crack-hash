@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_CUDA_H
 #define HC_EXT_CUDA_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 /**
  * from cuda.h (/usr/local/cuda-10.1/targets/x86_64-linux/include/cuda.h)
  */
@@ -1181,5 +1183,7 @@ int hc_cuLinkCreate            (void *hashcat_ctx, unsigned int numOptions, CUji
 int hc_cuLinkAddData           (void *hashcat_ctx, CUlinkState state, CUjitInputType type, void *data, size_t size, const char *name, unsigned int numOptions, CUjit_option *options, void **optionValues);
 int hc_cuLinkDestroy           (void *hashcat_ctx, CUlinkState state);
 int hc_cuLinkComplete          (void *hashcat_ctx, CUlinkState state, void **cubinOut, size_t *sizeOut);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_CUDA_H

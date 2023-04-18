@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_IOKIT_H
 #define HC_EXT_IOKIT_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #if defined(__APPLE__)
 #include <IOKit/IOKitLib.h>
 
@@ -125,5 +127,7 @@ int hm_IOKIT_get_utilization_current (void *hashcat_ctx, int *utilization);
 bool iokit_init (void *hashcat_ctx);
 bool iokit_close (void *hashcat_ctx);
 #endif // __APPLE__
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_IOKIT_H

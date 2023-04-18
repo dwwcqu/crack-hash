@@ -5,7 +5,9 @@
 
 #ifndef HC_NVML_H
 #define HC_NVML_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 /**
  * Declarations from nvml.h
  */
@@ -232,5 +234,7 @@ int hm_NVML_nvmlDeviceGetClockInfo (void *hashcat_ctx, nvmlDevice_t device, nvml
 int hm_NVML_nvmlDeviceGetTemperatureThreshold (void *hashcat_ctx, nvmlDevice_t device, nvmlTemperatureThresholds_t thresholdType, unsigned int *temp);
 int hm_NVML_nvmlDeviceGetCurrPcieLinkWidth (void *hashcat_ctx, nvmlDevice_t device, unsigned int *currLinkWidth);
 int hm_NVML_nvmlDeviceGetPciInfo (void *hashcat_ctx, nvmlDevice_t device, nvmlPciInfo_t *pci);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_NVML_H

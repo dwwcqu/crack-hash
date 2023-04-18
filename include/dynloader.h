@@ -5,7 +5,9 @@
 
 #ifndef HC_DYNLOADER_H
 #define HC_DYNLOADER_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #include <stdlib.h>
 
 #ifdef _WIN
@@ -75,5 +77,7 @@ hc_dynfunc_t hc_dlsym   (hc_dynlib_t handle, const char *symbol);
       } \
     } \
   } while (0)
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC__DYNALOADER_H

@@ -13,7 +13,9 @@
 // for getch()
 #include <conio.h>
 #endif
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 typedef struct usage_sort
 {
   u32   hash_mode;
@@ -25,5 +27,7 @@ typedef struct usage_sort
 void usage_mini_print (const char *progname);
 void usage_big_print  (hashcat_ctx_t *hashcat_ctx);
 int sort_by_usage (const void *p1, const void *p2);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_USAGE_H

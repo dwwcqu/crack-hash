@@ -19,7 +19,11 @@
 #include <pthread.h>
 #include <pwd.h>
 #endif // _POSIX
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int process_stdout (hashcat_ctx_t *hashcat_ctx, hc_device_param_t *device_param, const u64 pws_cnt);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_STDOUT_H

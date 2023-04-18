@@ -23,7 +23,9 @@
 #else
 #include <sys/select.h>
 #endif
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int sort_by_string_sized (const void *p1, const void *p2);
 int sort_by_stringptr    (const void *p1, const void *p2);
 
@@ -109,5 +111,7 @@ bool is_apple_silicon (void);
 #endif
 
 char *file_to_buffer (const char *filename);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_SHARED_H

@@ -5,7 +5,9 @@
 
 #ifndef HC_DICTSTAT_H
 #define HC_DICTSTAT_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -28,5 +30,7 @@ void dictstat_read    (hashcat_ctx_t *hashcat_ctx);
 int  dictstat_write   (hashcat_ctx_t *hashcat_ctx);
 u64  dictstat_find    (hashcat_ctx_t *hashcat_ctx, dictstat_t *d);
 void dictstat_append  (hashcat_ctx_t *hashcat_ctx, dictstat_t *d);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_DICTSTAT_H

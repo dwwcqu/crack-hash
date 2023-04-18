@@ -10,7 +10,9 @@
 #include <string.h>
 #include <errno.h>
 #include <inttypes.h>
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #if defined (__CYGWIN__)
 int    _wopen       (const char *path, int oflag, ...);
 #endif
@@ -39,5 +41,7 @@ u64    count_lines  (HCFILE *fp);
 size_t in_superchop (char *buf);
 size_t superchop_with_length (char *buf, const size_t len);
 
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_FILEHANDLING_H

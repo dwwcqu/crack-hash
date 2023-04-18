@@ -21,7 +21,9 @@
 #define SP_FILESZ     (sizeof (u64) + sizeof (u64) + (sizeof (u64) * SP_ROOT_CNT) + (sizeof (u64) * SP_MARKOV_CNT))
 
 #define INCR_MASKS    1000
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 u32   mp_get_length (const char *mask, const u32 opts_type);
 
 void  sp_exec (u64 ctx, char *pw_buf, cs_t *root_css_buf, cs_t *markov_css_buf, u32 start, u32 stop);
@@ -30,5 +32,7 @@ int   mask_ctx_update_loop    (hashcat_ctx_t *hashcat_ctx);
 int   mask_ctx_init           (hashcat_ctx_t *hashcat_ctx);
 void  mask_ctx_destroy        (hashcat_ctx_t *hashcat_ctx);
 int   mask_ctx_parse_maskfile (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_MPSP_H

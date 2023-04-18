@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_METAL_H
 #define HC_EXT_METAL_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #if defined (__APPLE__)
 
 #include <objc/runtime.h>
@@ -114,5 +116,7 @@ int  hc_mtlSetCommandEncoderArg     (void *hashcat_ctx, mtl_command_encoder meta
 int  hc_mtlEncodeComputeCommand     (void *hashcat_ctx, mtl_command_encoder metal_command_encoder, mtl_command_buffer metal_command_buffer, size_t global_work_size, size_t local_work_size, double *ms);
 
 #endif // __APPLE__
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_METAL_H

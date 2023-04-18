@@ -7,7 +7,9 @@
 #define HC_CONVERT_H
 
 #include <ctype.h>
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 bool is_hexify (const u8 *buf, const size_t len);
 size_t exec_unhexify (const u8 *in_buf, const size_t in_len, u8 *out_buf, const size_t out_sz);
 
@@ -81,5 +83,7 @@ u64 v64_from_v32ab (const u32 v32a, const u32 v32b);
 
 int hex_decode (const u8 *in_buf, const int in_len, u8 *out_buf);
 int hex_encode (const u8 *in_buf, const int in_len, u8 *out_buf);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_CONVERT_H

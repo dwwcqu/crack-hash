@@ -20,7 +20,9 @@ static const int MODULE_HASH_MODES_MAXIMUM = 100000;
 /**
  * output functions
  */
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int  module_filename (const folder_config_t *folder_config, const int hash_mode, char *out_buf, const size_t out_size);
 bool module_load     (hashcat_ctx_t *hashcat_ctx, module_ctx_t *module_ctx, const u32 hash_mode);
 void module_unload   (module_ctx_t *module_ctx);
@@ -57,5 +59,7 @@ u32         default_salt_max                (MAYBE_UNUSED const hashconfig_t *ha
 char        default_separator               (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
 u64         default_tmp_size                (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
 bool        default_warmup_disable          (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_INTERFACE_H

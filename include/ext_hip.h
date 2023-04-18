@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_HIP_H
 #define HC_EXT_HIP_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 // The general Idea with HIP is to use it for AMD GPU since we use CUDA for NV
 // Therefore, we need to take certain items, such as hipDeviceptr_t from driver specific paths like amd_driver_types.h
 // We just need to keep this in mind in case we need to update these constants from future SDK versions
@@ -498,5 +500,7 @@ int hc_hipRuntimeGetVersion    (void *hashcat_ctx, int *runtimeVersion);
 int hc_hipStreamCreate         (void *hashcat_ctx, hipStream_t *phStream, unsigned int Flags);
 int hc_hipStreamDestroy        (void *hashcat_ctx, hipStream_t hStream);
 int hc_hipStreamSynchronize    (void *hashcat_ctx, hipStream_t hStream);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_HIP_H

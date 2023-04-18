@@ -22,7 +22,11 @@
 #if defined (_WIN)
 #include <windows.h>
 #endif // _WIN
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int set_cpu_affinity (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_AFFINITY_H

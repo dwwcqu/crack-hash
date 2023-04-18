@@ -5,7 +5,9 @@
 
 #ifndef HC_HASHES_H
 #define HC_HASHES_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int sort_by_digest_p0p1  (const void *v1, const void *v2, void *v3);
 int sort_by_salt         (const void *v1, const void *v2);
 int sort_by_hash         (const void *v1, const void *v2, void *v3);
@@ -32,5 +34,7 @@ int hashes_init_zerohash  (hashcat_ctx_t *hashcat_ctx);
 void hashes_destroy (hashcat_ctx_t *hashcat_ctx);
 
 void hashes_logger (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_HASHES_H

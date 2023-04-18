@@ -17,7 +17,9 @@
 
 #define RESTORE_VERSION_MIN 600
 #define RESTORE_VERSION_CUR 611
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int cycle_restore (hashcat_ctx_t *hashcat_ctx);
 
 void unlink_restore (hashcat_ctx_t *hashcat_ctx);
@@ -25,5 +27,7 @@ void unlink_restore (hashcat_ctx_t *hashcat_ctx);
 int restore_ctx_init (hashcat_ctx_t *hashcat_ctx, int argc, char **argv);
 
 void restore_ctx_destroy (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_RESTORE_H

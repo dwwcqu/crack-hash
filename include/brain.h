@@ -190,7 +190,9 @@ typedef struct brain_server_client_options
   int  session_whitelist_cnt;
 
 } brain_server_client_options_t;
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 int   brain_logging                     (FILE *stream, const int client_idx, const char *format, ...);
 
 u32   brain_compute_session             (hashcat_ctx_t *hashcat_ctx);
@@ -251,5 +253,7 @@ void  brain_server_db_attack_free       (brain_server_db_attack_t *brain_server_
 
 int   brain_ctx_init                    (hashcat_ctx_t *hashcat_ctx);
 void  brain_ctx_destroy                 (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_BRAIN_H

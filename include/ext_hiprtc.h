@@ -5,7 +5,9 @@
 
 #ifndef HC_EXT_HIPRTC_H
 #define HC_EXT_HIPRTC_H
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 // start: hiprtc.h
 
 typedef enum hiprtcResult {
@@ -74,5 +76,7 @@ int hc_hiprtcGetProgramLogSize   (void *hashcat_ctx, hiprtcProgram prog, size_t 
 int hc_hiprtcGetProgramLog       (void *hashcat_ctx, hiprtcProgram prog, char *log);
 int hc_hiprtcGetCodeSize         (void *hashcat_ctx, hiprtcProgram prog, size_t *codeSizeRet);
 int hc_hiprtcGetCode             (void *hashcat_ctx, hiprtcProgram prog, char *code);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_EXT_HIPRTC_H

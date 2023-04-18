@@ -3,7 +3,9 @@
 #define HC_MODULES_H
 
 static const size_t MODULE_CONTEXT_SIZE_CURRENT = sizeof (module_ctx_t);
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 void        module_init                     (module_ctx_t *module_ctx);
 
 u32         module_attack_exec              (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra);
@@ -87,5 +89,7 @@ int         module_build_plain_postprocess  (MAYBE_UNUSED const hashconfig_t *ha
 bool        module_unstable_warning         (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const user_options_t *user_options, MAYBE_UNUSED const user_options_extra_t *user_options_extra, MAYBE_UNUSED const hc_device_param_t *device_param);
 
 bool        module_potfile_custom_check     (MAYBE_UNUSED const hashconfig_t *hashconfig, MAYBE_UNUSED const hash_t *db, MAYBE_UNUSED const hash_t *entry_hash, MAYBE_UNUSED const void *entry_tmps);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_MODULES_H

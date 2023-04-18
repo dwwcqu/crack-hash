@@ -13,7 +13,9 @@
 #include <errno.h>
 
 // logfile_append() checks for logfile_disable internally to make it easier from here
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 #define logfile_top_msg(msg)                               logfile_append (hashcat_ctx, "%s\t%s",                  logfile_ctx->topid,                     (msg))
 #define logfile_sub_msg(msg)                               logfile_append (hashcat_ctx, "%s\t%s\t%s",              logfile_ctx->topid, logfile_ctx->subid, (msg))
 #define logfile_top_var_uint64(var,val)                    logfile_append (hashcat_ctx, "%s\t%s\t%" PRIu64 "",     logfile_ctx->topid,                     (var), (u64)   (val))
@@ -39,5 +41,7 @@ void logfile_generate_subid (hashcat_ctx_t *hashcat_ctx);
 void logfile_append         (hashcat_ctx_t *hashcat_ctx, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));
 int  logfile_init           (hashcat_ctx_t *hashcat_ctx);
 void logfile_destroy        (hashcat_ctx_t *hashcat_ctx);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_LOGFILE_H

@@ -42,7 +42,9 @@ typedef struct
   int grp_op_alias_cnt;
 
 } rp_gen_ops_t;
-
+#ifdef __cplusplus
+extern "C"{
+#endif
 bool class_num   (const u8 c);
 bool class_lower (const u8 c);
 bool class_upper (const u8 c);
@@ -62,5 +64,7 @@ bool kernel_rules_has_noop (const kernel_rule_t *kernel_rules_buf, const u32 ker
 
 int kernel_rules_load     (hashcat_ctx_t *hashcat_ctx, kernel_rule_t **out_buf, u32 *out_cnt);
 int kernel_rules_generate (hashcat_ctx_t *hashcat_ctx, kernel_rule_t **out_buf, u32 *out_cnt, const char *rp_gen_func_selection);
-
+#ifdef __cplusplus
+}
+#endif
 #endif // HC_RP_H
