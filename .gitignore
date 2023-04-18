@@ -1,7 +1,7 @@
+.vscode
 *.exe
 *.bin
 *.app
-hashcat
 hashcat.exe
 libhashcat.so.*
 libhashcat*.dylib
@@ -25,3 +25,4 @@ obj/*.a
 include/CL
 tools/luks_tests
 build/
+crack-hash
