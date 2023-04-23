@@ -6,6 +6,7 @@ project(crack_hashcat VERSION 0.1
 option(PRODUCTION "Whether Build the Production" OFF)
 # Debug 或者 Release 编译
 set(DEBUG 1)
+set(VERSION_TAG "v6.2.6-257-g1c55ee222+")
 
 # 使用系统上依赖库，还是项目本身自带的依赖文件
 option(USE_SYSTEM_LZMA "Whether Use System LZMA Library" OFF)
@@ -19,6 +20,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 option(ENABLE_CUBIN "Whether Enable CUBIN" ON)
 option(ENABLE_BRAIN "Whether Enable Brain Model" ON)
 option(ENABLE_UNRAR "Whether Enable unrar Library" ON)
+
+# hashcat 安装路径
+set(INSTALL_FOLDER 			${CMAKE_INSTALL_PREFIX}/bin)
+set(SHARED_ROOT_FOLDER   	${CMAKE_INSTALL_PREFIX}/share)
+set(SHARED_FOLDER        	${SHARED_ROOT_FOLDER}/hashcat)
+set(DOCUMENT_FOLDER         ${SHARED_ROOT_FOLDER}/doc/hashcat)
+set(LIBRARY_FOLDER          ${CMAKE_INSTALL_PREFIX}/lib)
+set(LIBRARY_DEV_ROOT_FOLDER	${CMAKE_INSTALL_PREFIX}/include)
+set(LIBRARY_DEV_FOLDER      ${LIBRARY_DEV_ROOT_FOLDER}/hashcat)
 
 # 所有的库文件采用静态库
 set(BUILD_SHARED_LIBS OFF)
@@ -253,8 +263,6 @@ endif()
 set(CCFLAGS -std=gnu99)
 set(CXXFLAGS)
 
-add_compile_options(${CCFLAGS} ${CFLAGS_NATIVE})
-
 # LibLZMA
 if(USE_SYSTEM_LZMA)
 	find_package(LibLZMA REQUIRED)
@@ -292,8 +300,7 @@ if(ENABLE_UNRAR)
 	endif()
 endif()
 
-message(STATUS "CFLAGS_NATIVE : ${CFLAGS_NATIVE}")
-message(STATUS "LFLAGS_NATIVE : ${LFLAGS_NATIVE}")
-
+# GLFW3 库
+add_subdirectory(deps/glfw3)
 # hashcat 源文件的编译，需要与依赖的库进行链接
 add_subdirectory(src)
