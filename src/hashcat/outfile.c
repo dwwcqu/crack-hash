@@ -530,7 +530,7 @@ int outfile_write_open (hashcat_ctx_t *hashcat_ctx)
 
   if (outfile_ctx->is_fifo == false || outfile_ctx->fp.pfp == NULL)
   {
-    if (hc_fopen (&outfile_ctx->fp, outfile_ctx->filename, "ab") == false)
+    if (hc_fopen (&outfile_ctx->fp, outfile_ctx->filename, "wb") == false)
     {
       event_log_error (hashcat_ctx, "%s: %s", outfile_ctx->filename, strerror (errno));
 
