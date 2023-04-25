@@ -18,7 +18,8 @@ target_compile_definitions(crack-hash   PRIVATE -DCOMPTIME=${COMPTIME}
                                         PRIVATE -DVERSION_TAG=\"${VERSION_TAG}\"
                                         PRIVATE -DINSTALL_FOLDER=\"${INSTALL_FOLDER}\"
                                         PRIVATE -DSHARED_FOLDER=\"${SHARED_FOLDER}\"
-                                        PRIVATE -DDOCUMENT_FOLDER=\"${DOCUMENT_FOLDER}\")
+                                        PRIVATE -DDOCUMENT_FOLDER=\"${DOCUMENT_FOLDER}\"
+                                        PRIVATE -DCRACK_PROJECT_DIR=\"${PROJECT_SOURCE_DIR}\")
 set_target_properties(crack-hash
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}"

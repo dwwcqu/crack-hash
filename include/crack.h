@@ -20,20 +20,21 @@ public:
     CrackHash(const std::string &filename = "result.txt");
     ~CrackHash();
     void crack(const char *hash_value, CRACK_ALGO_TYPE type);
+    std::string get_hashcat_status_string();
     std::string getPassword();
+    bool isInitilizing();
     bool isCracking();
     bool isCracked();
+    bool deviceFound();
     std::pair<int, int> get_guess_base();
+    double get_progress_percent();
 
 protected:
     void init();
     void destroy();
     void init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type);
-    void get_hashcat_status();
 private:
-    hashcat_ctx_t *hashcat_ctx;
-    hashcat_status_t *hashcat_status;
-    int progress_mode = PROGRESS_MODE_KEYSPACE_KNOWN;
+    hashcat_ctx_t *hashcat_ctx = nullptr;
     const char *install_folder = NULL;
     const char *shared_folder = NULL;
     std::string result_file_names;

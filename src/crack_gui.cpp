@@ -7,7 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include "crack_gui.h"
-#include "thread.h"
+#include <pthread.h>
 // 哈希算法库
 #include "md5.h"
 #include "sha1.h"
@@ -36,6 +36,8 @@ void *hashcat_crack_hash(void *arg){
     const char *hash_value = crack->hash_value;
     CRACK_ALGO_TYPE *type = crack->type;
     hashcat->crack(hash_value, *type);
+    int res = 0;
+    pthread_exit((void *)&res);
 }
 
 
@@ -48,12 +50,13 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 CrackGUIShader::CrackGUIShader(const char *result_save_path)
-    : hashcat(result_save_path)
+    : hashcat(new CrackHash(result_save_path))
 {
     init();
 }
 
 CrackGUIShader::~CrackGUIShader(){
+    delete hashcat;
     shutdown();
 }
 
@@ -80,15 +83,20 @@ void CrackGUIShader::init(){
         glfwTerminate();
         exit(-1);
     }
-    static Shader m_shader("../shader/vShader.vs", "../shader/fShader.fs");
-    m_shader.initArgument("../image/dcu_crack.png");
+    const char *project_dir = "";
+#ifdef CRACK_PROJECT_DIR
+    project_dir = CRACK_PROJECT_DIR;
+#endif
+    std::string dir(project_dir);
+    static Shader m_shader((dir + "/shader/vShader.vs").c_str(), (dir + "/shader/fShader.fs").c_str());
+    m_shader.initArgument((dir + "/image/dcu_crack.png").c_str());
     p_shader = &m_shader;
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-    io.Fonts->AddFontFromFileTTF("../fonts/Cousine-Regular.ttf", 25.0f);
+    io.Fonts->AddFontFromFileTTF((dir + "/fonts/Cousine-Regular.ttf").c_str(), 25.0f);
     ImGui::StyleColorsLight();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
@@ -129,15 +137,56 @@ void CrackGUIShader::showPasswordInput(){
         ImGui::End();
         return;
     }
-    ImGui::InputText("Input Password", password, IM_ARRAYSIZE(password), ImGuiInputTextFlags_Password);
-    ImGui::InputText("Confirm Password", re_password, IM_ARRAYSIZE(re_password), ImGuiInputTextFlags_Password);
-    if(ImGui::Button("Enter", ImVec2(100, 40))){
-        if(strcmp(password, re_password) == 0)
-            password_entered = true;
-        else
-            password_correct_input = false;
+    ImGui::Text("Mode Select: ");
+    ImGui::RadioButton("Hash Mode", &crack_mode, 1);
+    ImGui::SameLine();
+    ImGui::RadioButton("Password Mode", &crack_mode, 2);
+    ImGui::Text("Hash Algorithm Select: ");
+    ImGui::RadioButton("MD5", &hash_algo, 1);
+    ImGui::SameLine();
+    ImGui::RadioButton("SHA1", &hash_algo, 2);
+    ImGui::SameLine();
+    ImGui::RadioButton("SHA256", &hash_algo, 3);
+    switch (hash_algo)
+    {
+        case 1 : type = CRACK_ALGO_TYPE_MD5; break;
+        case 2 : type = CRACK_ALGO_TYPE_SHA1; break;
+        case 3 : type = CRACK_ALGO_TYPE_SHA256; break;
+        default: break;
     }
-    if(!password_correct_input){
+    if(crack_mode == 1){
+        ImGui::InputText("Hash Value", hash_input, IM_ARRAYSIZE(hash_input), ImGuiInputTextFlags_CharsHexadecimal);
+    }
+    else{
+        ImGui::InputText("Input Password", password, IM_ARRAYSIZE(password), ImGuiInputTextFlags_Password);
+        ImGui::InputText("Confirm Password", re_password, IM_ARRAYSIZE(re_password), ImGuiInputTextFlags_Password);
+    }
+    if(ImGui::Button("Enter", ImVec2(100, 40))){
+        // 哈希值输入模式
+        if(crack_mode == 1){
+            int len = strlen(hash_input);
+            if((hash_algo == 1 && len == 32) || (hash_algo == 2 && len == 40)
+               || (hash_algo == 2 && len == 64)){
+                    hash_correct_input = true;
+                    input_complete = true;
+               }
+            else 
+                hash_correct_input = false;
+        }
+        // 密码输入模式
+        else{
+            if(strcmp(password, re_password) != 0)
+                password_correct_input = false;
+            else
+                input_complete = true;
+        }
+    }
+    if(crack_mode == 1 && !hash_correct_input){
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s",
+            "The hash value you entered does not match the hash algorithm!");
+    }
+    if(crack_mode == 2 && !password_correct_input){
         ImGui::SameLine();
         ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s",
             "The passwords you entered are inconsistent!");
@@ -150,47 +199,93 @@ void CrackGUIShader::showPasswordCrackProgress() {
         ImGui::End();
         return;
     }
+    // 在单个线程中运行 hashcat 进行破解
     if(!hashcat_crack_started){
-        hashcat_crack_started = true;
-        // 获得该密码的哈希值
-        CRACK::MD5 algo;
-        type = CRACK_ALGO_TYPE_MD5;
-        hash_value = algo(password);
-        hashcat_crack_struct args(&hashcat, hash_value.c_str(), &type);
-        int ret = hc_thread_create(hashcat_thread, hashcat_crack_hash, &args);
+        hashcat_crack_started = true;       // 只需要运行一次
+        // 密码输入模式，需要先计算密码的哈希值
+        if(crack_mode == 2){
+            if(hash_algo == 1){
+                CRACK::MD5 algo;
+                hash_value = algo(password);
+            }
+            else if(hash_algo == 2){
+                CRACK::SHA1 algo;
+                hash_value = algo(password);
+            }
+            else {
+                CRACK::SHA256 algo;
+                hash_value = algo(password);
+            }
+        }
+        // 根据不同的模式修改要破解的哈希值
+        hashcat_crack_struct args(hashcat, NULL, &type);
+        if(crack_mode == 1)
+            args.hash_value = hash_input;
+        else
+            args.hash_value = hash_value.c_str();
+        pthread_attr_t pAttr;
+        pthread_attr_init(&pAttr);
+        pthread_attr_setdetachstate(&pAttr, PTHREAD_CREATE_DETACHED);
+        int ret = pthread_create(&hashcat_thread, NULL, hashcat_crack_hash, &args);
         if(ret != 0){
             perror("pthread_create");
             shutdown();
             exit(-1);
         }
-        ret = pthread_join (hashcat_thread, NULL);
-        if (ret != 0) {
-            perror ("pthread_join");
-            shutdown();
-            exit(-1);
-        }
+        pthread_attr_destroy(&pAttr);
     }
-    if(hashcat.isCracking()){
-        auto guess_base = hashcat.get_guess_base();
+    initlizing = hashcat->isInitilizing();
+    if(initlizing){
+        std::string dot(timer, '.');
+        ImGui::Text("Crack Environments Initializing%s", dot.c_str());
+        timer = (timer + 1) % 7; 
+    }
+    if(!initlizing && !hashcat->deviceFound()){
+        ImGui::TextColored(ImVec4(1.0f, 0, 0, 1.0f), "No devices found/left");
+        timer = 6;
+    }
+    if(hashcat->isCracking()){
+        auto guess_base = hashcat->get_guess_base();
+        guess_base_offset = guess_base.first;
+        guess_base_count = guess_base.second;
         float guess_base_progress = (1.0f * guess_base.first) / guess_base.second;
         char buf[32];
         sprintf(buf, "%d/%d", guess_base.first, guess_base.second);
+        ImGui::Text("Crack Level Progress:");
         ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
-        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-        ImGui::Text("Crack Guess Progress");
+        progress = hashcat->get_progress_percent() / 100;
+        ImGui::Text("Crack Progress:");
+        ImGui::ProgressBar(progress);
     }
-    if(hashcat.isCracked())
-        password_cracked = true;
+    if((guess_base_offset == guess_base_count && ((int) progress) == 1) || hashcat->isCracked()){
+        crack_finished = true;
+        if(hashcat->isCracked())
+            crack_successed = true;
+    }
     ImGui::End();
 }
 
-void CrackGUIShader::showPasswordCracked(){
+void CrackGUIShader:: showPasswordCrackResults(){
     if(!ImGui::Begin("Password Display Board")){
         ImGui::End();
         return;
     }
-    std::string cracked_password = hashcat.getPassword();
-    ImGui::Text("Cracked Password: %s", cracked_password.c_str());
+    // 等待 hashcat 将结果写回
+    if(timer < 1100){
+        std::string dot(timer % 7, '.');
+        ImGui::Text("Waiting Results Write-back%s", dot.c_str());
+        timer++;
+    }
+    if(timer >= 1100) {
+        if(crack_successed){
+            std::string cracked_password = hashcat->getPassword();
+            ImGui::Text("Cracked Password: ");
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", cracked_password.c_str());
+        }
+        else
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "Cracked Failed!");
+    }
     ImGui::End();
 }
 
@@ -199,22 +294,22 @@ void CrackGUIShader::shader(){
     while (!glfwWindowShouldClose(window)){
         shaderBegin();
         setNextWindowFormat();
-        if(!password_entered)
+        if(!input_complete)
             showPasswordInput();
         setNextWindowFormat();
-        if(password_entered && !password_cracked)
+        if(input_complete && !crack_finished)
             showPasswordCrackProgress();
         setNextWindowFormat();
-        if(password_entered && password_cracked)
-            showPasswordCracked();
+        if(input_complete && crack_finished)
+            showPasswordCrackResults();
         shaderEnd();
     }
 }
 
 void CrackGUIShader::setNextWindowFormat(){
     double dcu_occupy = (170.0f / 720.0f);
-    double ident_x = 0.2f;
-    double ident_y = 0.1f;
+    double ident_x = 0.05f;
+    double ident_y = 0.025f;
     int window_pos_x = glfw_window_width * ident_x;
     int window_pos_y = glfw_window_height * (ident_y + dcu_occupy) ;
     int window_size_x = glfw_window_width * (1 - 2 * ident_x);
