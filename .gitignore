@@ -27,3 +27,4 @@ tools/luks_tests
 build/
 crack-hash
 imgui.ini
+result.txt
