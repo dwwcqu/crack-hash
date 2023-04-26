@@ -56,23 +56,7 @@ void CrackHash::destroy(){
     hcfree (hashcat_ctx);
 }
 
-void CrackHash::crack(const char *hash_value, CRACK_ALGO_TYPE type){
-    m_cracked = false;
-    if(hashcat_ctx == nullptr){
-        std::cerr << "hashcat_ctx_t does't malloced\n";
-    }
-    init_hashcat_options(hash_value, type);
-    int rc_final = -1;
-    if (hashcat_session_init (hashcat_ctx, install_folder, shared_folder, argc, argv, COMPTIME) == 0){
-        backend_info_compact (hashcat_ctx);
-        user_options_info (hashcat_ctx);
-        rc_final = hashcat_session_execute (hashcat_ctx);
-    }
-    if(rc_final == -1)
-        m_cracked = false;
-    else
-        m_cracked = true;
-}
+
 
 std::string CrackHash::getPassword(){
     if(!m_cracked){
@@ -87,48 +71,6 @@ std::string CrackHash::getPassword(){
     return crack_value;
 }
 
-void CrackHash::init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type){
-    const char *hash_mode;
-    if(type == CRACK_ALGO_TYPE_MD5)
-        hash_mode = "0";
-    else if(type == CRACK_ALGO_TYPE_SHA1)
-        hash_mode = "100";
-    else if(type = CRACK_ALGO_TYPE_SHA256)
-        hash_mode = "1400";
-    else{
-        std::cerr << "Algorithm (" << type << ") not support!\n";
-        exit(-1);
-    }
-    const char *filename = result_file_names.c_str();
-    static const char *argv_temp[] = {
-        "./crack_hash",
-        "-a",
-        "3",                                // 掩码攻击
-        "-m",
-        hash_mode,                          // 要破解的算法
-        "-o",
-        filename,                           // 保存破解结果的文件
-        "--potfile-disable",                // disable potfile
-        "--outfile-format=2",               // 破解哈希值的格式
-        "-D",
-        "2",                                // 使用 GPU
-        "--increment",
-        "--increment-min=6",                // 密码最小长度 6
-        "--increment-max=12",               // 密码最大长度 12
-        hash_value,                         // 要破解的哈希值
-        "?l?l?l?l?l?l?l?l?l?l?l?l"
-    };
-    argc = sizeof(argv_temp) / sizeof(char *);
-    argv = (char **)argv_temp;
-    if (user_options_getopt (hashcat_ctx, argc, argv) == -1){
-        user_options_destroy (hashcat_ctx);
-        std::cerr << "user_options_getopt (file = " << __FILE__ << ", line = " << __LINE__ << ")\n";
-    }
-    if (user_options_sanity (hashcat_ctx) == -1){
-        user_options_destroy (hashcat_ctx);
-        std::cerr << "user_options_sanity (file = " << __FILE__ << ", line = " << __LINE__ << ")\n";
-    }
-}
 
 bool CrackHash::isCracking(){
     std::string status(get_hashcat_status_string());
@@ -170,10 +112,12 @@ std::string CrackHash::get_hashcat_status_string(){
 }
 
 bool CrackHash::isCracked(){
-    std::string status(get_hashcat_status_string());
-    return status == "Cracked";
+    return m_cracked;
 }
-
+ bool CrackHash::isExhausted(){
+    std::string status(get_hashcat_status_string());
+    return status == "Exhausted";
+ }
 std::pair<int, int> CrackHash::get_guess_base(){
     int guess_base_offset = status_get_guess_base_offset(hashcat_ctx);
     int guess_base_count = status_get_guess_base_count(hashcat_ctx);
@@ -183,3 +127,149 @@ std::pair<int, int> CrackHash::get_guess_base(){
  double CrackHash::get_progress_percent(){
     return status_get_progress_finished_percent(hashcat_ctx);
  }
+
+std::string CrackHash::get_backend_device_speed(){
+    const backend_ctx_t *backend_ctx = hashcat_ctx->backend_ctx;
+    int device_cnt = backend_ctx->backend_devices_cnt;
+    double speed = 0.0f;
+    for(int cnt = 0; cnt < device_cnt; ++cnt){
+        speed = status_get_hashes_msec_dev(hashcat_ctx, cnt);
+        if(speed != 0)
+            break;
+    }
+    char speed_string[40];
+    format_speed_display (speed * 1000, speed_string, sizeof(speed_string));
+    return {speed_string};
+}
+
+DCUCrackHash::DCUCrackHash(const std::string &filename) : CrackHash(filename){
+
+}
+
+IntelCPUCrackHash::IntelCPUCrackHash(const std::string &filename) : CrackHash(filename){
+    
+}
+
+ void DCUCrackHash::init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type){
+    const char *hash_mode;
+    if(type == CRACK_ALGO_TYPE_MD5)
+        hash_mode = "0";
+    else if(type == CRACK_ALGO_TYPE_SHA1)
+        hash_mode = "100";
+    else if(type = CRACK_ALGO_TYPE_SHA256)
+        hash_mode = "1400";
+    else{
+        std::cerr << "Algorithm (" << type << ") not support!\n";
+        exit(-1);
+    }
+    const char *filename = result_file_names.c_str();
+    static const char *argv_temp_1[] = {
+        "./crack_hash",
+        "-a",
+        "3",                                // 掩码攻击
+        "-m",
+        hash_mode,                          // 要破解的算法
+        "--session=DCU",
+        "-o",
+        filename,                           // 保存破解结果的文件
+        "--potfile-disable",                // disable potfile
+        "--outfile-format=2",               // 破解哈希值的格式
+        "-D",
+        "2",                                // 使用 GPU
+        "--increment",
+        "--increment-min=6",                // 密码最小长度 6
+        "--increment-max=12",               // 密码最大长度 12
+        hash_value,                         // 要破解的哈希值
+        "?l?l?l?l?l?l?l?l?l?l?l?l"
+    };
+    argc = sizeof(argv_temp_1) / sizeof(char *);
+    argv = (char **)argv_temp_1;
+    if (user_options_getopt (hashcat_ctx, argc, argv) == -1){
+        user_options_destroy (hashcat_ctx);
+        std::cerr << "user_options_getopt (file = " << __FILE__ << ", line = " << __LINE__ << ")\n";
+    }
+    if (user_options_sanity (hashcat_ctx) == -1){
+        user_options_destroy (hashcat_ctx);
+        std::cerr << "user_options_sanity (file = " << __FILE__ << ", line = " << __LINE__ << ")\n";
+    }
+}
+
+void IntelCPUCrackHash::init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type){
+    const char *hash_mode;
+    if(type == CRACK_ALGO_TYPE_MD5)
+        hash_mode = "0";
+    else if(type == CRACK_ALGO_TYPE_SHA1)
+        hash_mode = "100";
+    else if(type = CRACK_ALGO_TYPE_SHA256)
+        hash_mode = "1400";
+    else{
+        std::cerr << "Algorithm (" << type << ") not support!\n";
+        exit(-1);
+    }
+    const char *filename = result_file_names.c_str();
+    static const char *argv_temp_2[] = {
+        "./crack_hash",
+        "-a",
+        "3",                                // 掩码攻击
+        "-m",
+        hash_mode,                          // 要破解的算法
+        "--session=IntelCPU",
+        "-o",
+        filename,                           // 保存破解结果的文件
+        "--potfile-disable",                // disable potfile
+        "--outfile-format=2",               // 破解哈希值的格式
+        "-D",
+        "1",                                // 使用 CPU
+        "--increment",
+        "--increment-min=6",                // 密码最小长度 6
+        "--increment-max=12",               // 密码最大长度 12
+        hash_value,                         // 要破解的哈希值
+        "?l?l?l?l?l?l?l?l?l?l?l?l"
+    };
+    argc = sizeof(argv_temp_2) / sizeof(char *);
+    argv = (char **)argv_temp_2;
+    if (user_options_getopt (hashcat_ctx, argc, argv) == -1){
+        user_options_destroy (hashcat_ctx);
+        std::cerr << "user_options_getopt (file = " << __FILE__ << ", line = " << __LINE__ << ")\n";
+    }
+    if (user_options_sanity (hashcat_ctx) == -1){
+        user_options_destroy (hashcat_ctx);
+        std::cerr << "user_options_sanity (file = " << __FILE__ << ", line = " << __LINE__ << ")\n";
+    }
+}
+
+void DCUCrackHash::crack(const char *hash_value, CRACK_ALGO_TYPE type){
+    m_cracked = false;
+    if(hashcat_ctx == nullptr){
+        std::cerr << "hashcat_ctx_t does't malloced\n";
+    }
+    init_hashcat_options(hash_value, type);
+    int rc_final = -1;
+    if (hashcat_session_init (hashcat_ctx, install_folder, shared_folder, argc, argv, COMPTIME) == 0){
+        backend_info_compact (hashcat_ctx);
+        user_options_info (hashcat_ctx);
+        rc_final = hashcat_session_execute (hashcat_ctx);
+    }
+    if(rc_final == -1)
+        m_cracked = false;
+    else
+        m_cracked = true;
+}
+
+void IntelCPUCrackHash::crack(const char *hash_value, CRACK_ALGO_TYPE type){
+    m_cracked = false;
+    if(hashcat_ctx == nullptr){
+        std::cerr << "hashcat_ctx_t does't malloced\n";
+    }
+    init_hashcat_options(hash_value, type);
+    int rc_final = -1;
+    if (hashcat_session_init (hashcat_ctx, install_folder, shared_folder, argc, argv, COMPTIME) == 0){
+        backend_info_compact (hashcat_ctx);
+        user_options_info (hashcat_ctx);
+        rc_final = hashcat_session_execute (hashcat_ctx);
+    }
+    if(rc_final == -1)
+        m_cracked = false;
+    else
+        m_cracked = true;
+}

@@ -19,7 +19,8 @@
 // *******************************************************************************
 // **************** hashcat execute the crack process in thread mode *************
 // *******************************************************************************
-pthread_t hashcat_thread;
+pthread_t dcu_crack_thread;
+pthread_t cpu_crack_thread;
 typedef struct hashcat_crack_struct{
     CrackHash *hashcat;
     const char *hash_value;
@@ -49,14 +50,16 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-CrackGUIShader::CrackGUIShader(const char *result_save_path)
-    : hashcat(new CrackHash(result_save_path))
+CrackGUIShader::CrackGUIShader(const char *dcu_results, const char *cpu_results)
+    : dcu_crack(new DCUCrackHash(dcu_results)), 
+      cpu_crack(new IntelCPUCrackHash(cpu_results))
 {
     init();
 }
 
 CrackGUIShader::~CrackGUIShader(){
-    delete hashcat;
+    delete dcu_crack;
+    delete cpu_crack;
     shutdown();
 }
 
@@ -89,7 +92,7 @@ void CrackGUIShader::init(){
 #endif
     std::string dir(project_dir);
     static Shader m_shader((dir + "/shader/vShader.vs").c_str(), (dir + "/shader/fShader.fs").c_str());
-    m_shader.initArgument((dir + "/image/dcu_crack.png").c_str());
+    m_shader.initArgument((dir + "/image/dcu_vs_intel_cpu.png").c_str());
     p_shader = &m_shader;
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -193,40 +196,54 @@ void CrackGUIShader::showPasswordInput(){
     }
     ImGui::End();
 }
-
-void CrackGUIShader::showPasswordCrackProgress() {
-    if(!ImGui::Begin("Password Crack Board")){
+void CrackGUIShader::showDCUPasswordCrackFinished(){
+    if(!ImGui::Begin("DCU Password Crack Board")){
+        ImGui::End();
+        return;
+    }
+    float guess_base_progress = (1.0f * dcu_guess_base_offset) / dcu_guess_base_count;
+    char buf[32];
+    sprintf(buf, "%d/%d", dcu_guess_base_offset, dcu_guess_base_count);
+    ImGui::Text("Crack Level Progress:");
+    ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
+    ImGui::Text("Crack Progress:");
+    ImGui::ProgressBar(dcu_progress);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "DCU Crack Success!");
+    ImGui::End();
+}
+void CrackGUIShader::showDCUPasswordCrackProgress() {
+    if(!ImGui::Begin("DCU Password Crack Board")){
         ImGui::End();
         return;
     }
     // 在单个线程中运行 hashcat 进行破解
-    if(!hashcat_crack_started){
-        hashcat_crack_started = true;       // 只需要运行一次
+    if(!dcu_crack_started){
+        dcu_crack_started = true;       // 只需要运行一次
         // 密码输入模式，需要先计算密码的哈希值
         if(crack_mode == 2){
             if(hash_algo == 1){
                 CRACK::MD5 algo;
-                hash_value = algo(password);
+                dcu_hash_value = algo(password);
             }
             else if(hash_algo == 2){
                 CRACK::SHA1 algo;
-                hash_value = algo(password);
+                dcu_hash_value = algo(password);
             }
             else {
                 CRACK::SHA256 algo;
-                hash_value = algo(password);
+                dcu_hash_value = algo(password);
             }
         }
         // 根据不同的模式修改要破解的哈希值
-        hashcat_crack_struct args(hashcat, NULL, &type);
+        hashcat_crack_struct args(dcu_crack, NULL, &type);
         if(crack_mode == 1)
             args.hash_value = hash_input;
         else
-            args.hash_value = hash_value.c_str();
+            args.hash_value = dcu_hash_value.c_str();
         pthread_attr_t pAttr;
         pthread_attr_init(&pAttr);
         pthread_attr_setdetachstate(&pAttr, PTHREAD_CREATE_DETACHED);
-        int ret = pthread_create(&hashcat_thread, NULL, hashcat_crack_hash, &args);
+        int ret = pthread_create(&dcu_crack_thread, NULL, hashcat_crack_hash, &args);
         if(ret != 0){
             perror("pthread_create");
             shutdown();
@@ -234,57 +251,158 @@ void CrackGUIShader::showPasswordCrackProgress() {
         }
         pthread_attr_destroy(&pAttr);
     }
-    initlizing = hashcat->isInitilizing();
-    if(initlizing){
-        std::string dot(timer, '.');
+    if((dcu_initlizing == dcu_crack->isInitilizing())){
+        std::string dot(dcu_timer, '.');
         ImGui::Text("Crack Environments Initializing%s", dot.c_str());
-        timer = (timer + 1) % 7; 
+        dcu_timer = (dcu_timer + 1) % 7; 
     }
-    if(!initlizing && !hashcat->deviceFound()){
+    if(!dcu_initlizing && !dcu_crack->deviceFound()){
         ImGui::TextColored(ImVec4(1.0f, 0, 0, 1.0f), "No devices found/left");
-        timer = 6;
+        dcu_timer = 6;
     }
-    if(hashcat->isCracking()){
-        auto guess_base = hashcat->get_guess_base();
-        guess_base_offset = guess_base.first;
-        guess_base_count = guess_base.second;
+    if(dcu_crack->isCracking() || dcu_crack->isExhausted()){
+        auto guess_base = dcu_crack->get_guess_base();
+        dcu_guess_base_offset = guess_base.first;
+        dcu_guess_base_count = guess_base.second;
         float guess_base_progress = (1.0f * guess_base.first) / guess_base.second;
         char buf[32];
         sprintf(buf, "%d/%d", guess_base.first, guess_base.second);
         ImGui::Text("Crack Level Progress:");
         ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
-        progress = hashcat->get_progress_percent() / 100;
+        dcu_progress = dcu_crack->get_progress_percent() / 100;
         ImGui::Text("Crack Progress:");
-        ImGui::ProgressBar(progress);
+        ImGui::ProgressBar(dcu_progress);
+        ImGui::Text("DCU Speed: ");
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "%s", 
+                            dcu_crack->get_backend_device_speed().c_str());
     }
-    if((guess_base_offset == guess_base_count && ((int) progress) == 1) || hashcat->isCracked()){
-        crack_finished = true;
-        if(hashcat->isCracked())
-            crack_successed = true;
+    if((dcu_guess_base_offset == dcu_guess_base_count && ((int) dcu_progress) == 1) 
+            || dcu_crack->isCracked()){
+        dcu_crack_finished = true;
+        if(dcu_crack->isCracked())
+            dcu_crack_successed = true;
     }
     ImGui::End();
 }
+void CrackGUIShader::showIntelCPUPasswordCrackFinished(){
+    if(!ImGui::Begin("Intel CPU Password Crack Board")){
+        ImGui::End();
+        return;
+    }
+    float guess_base_progress = (1.0f * cpu_guess_base_offset) / cpu_guess_base_count;
+    char buf[32];
+    sprintf(buf, "%d/%d", cpu_guess_base_offset, cpu_guess_base_count);
+    ImGui::Text("Crack Level Progress:");
+    ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
+    ImGui::Text("Crack Progress:");
+    ImGui::ProgressBar(cpu_progress);
+    ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Intel CPU Crack Success!");
+    ImGui::End();
+}
 
+void CrackGUIShader::showIntelCPUPasswordCrackProgress() {
+    if(!ImGui::Begin("Intel CPU Password Crack Board")){
+        ImGui::End();
+        return;
+    }
+    // 在单个线程中运行 hashcat 进行破解
+    if(!cpu_crack_started){
+        cpu_crack_started = true;       // 只需要运行一次
+        // 密码输入模式，需要先计算密码的哈希值
+        if(crack_mode == 2){
+            if(hash_algo == 1){
+                CRACK::MD5 algo;
+                cpu_hash_value = algo(password);
+            }
+            else if(hash_algo == 2){
+                CRACK::SHA1 algo;
+                cpu_hash_value = algo(password);
+            }
+            else {
+                CRACK::SHA256 algo;
+                cpu_hash_value = algo(password);
+            }
+        }
+        // 根据不同的模式修改要破解的哈希值
+        hashcat_crack_struct args(cpu_crack, NULL, &type);
+        if(crack_mode == 1)
+            args.hash_value = hash_input;
+        else
+            args.hash_value = cpu_hash_value.c_str();
+        pthread_attr_t pAttr;
+        pthread_attr_init(&pAttr);
+        pthread_attr_setdetachstate(&pAttr, PTHREAD_CREATE_DETACHED);
+        int ret = pthread_create(&cpu_crack_thread, NULL, hashcat_crack_hash, &args);
+        if(ret != 0){
+            perror("pthread_create");
+            shutdown();
+            exit(-1);
+        }
+        pthread_attr_destroy(&pAttr);
+    }
+    if((cpu_initlizing = cpu_crack->isInitilizing())){
+        std::string dot(cpu_timer, '.');
+        ImGui::Text("Crack Environments Initializing%s", dot.c_str());
+        cpu_timer = (cpu_timer + 1) % 7; 
+    }
+    if(!cpu_initlizing && !cpu_crack->deviceFound()){
+        ImGui::TextColored(ImVec4(1.0f, 0, 0, 1.0f), "No devices found/left");
+        cpu_timer = 6;
+    }
+    if(cpu_crack->isCracking()|| cpu_crack->isExhausted()){
+        auto guess_base = cpu_crack->get_guess_base();
+        cpu_guess_base_offset = guess_base.first;
+        cpu_guess_base_count = guess_base.second;
+        float guess_base_progress = (1.0f * guess_base.first) / guess_base.second;
+        char buf[32];
+        sprintf(buf, "%d/%d", guess_base.first, guess_base.second);
+        ImGui::Text("Crack Level Progress:");
+        ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
+        cpu_progress = cpu_crack->get_progress_percent() / 100;
+        ImGui::Text("Crack Progress:");
+        ImGui::ProgressBar(cpu_progress);
+        ImGui::Text("Intel CPU Speed: ");
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "%s", 
+                            cpu_crack->get_backend_device_speed().c_str());
+    }
+    if((cpu_guess_base_offset == cpu_guess_base_count && ((int) cpu_progress) == 1) 
+            || cpu_crack->isCracked()){
+        cpu_crack_finished = true;
+        if(cpu_crack->isCracked())
+            cpu_crack_successed = true;
+    }
+    ImGui::End();
+}
 void CrackGUIShader:: showPasswordCrackResults(){
     if(!ImGui::Begin("Password Display Board")){
         ImGui::End();
         return;
     }
     // 等待 hashcat 将结果写回
-    if(timer < 1100){
-        std::string dot(timer % 7, '.');
+    if(cpu_timer < 1100){
+        std::string dot(cpu_timer % 7, '.');
         ImGui::Text("Waiting Results Write-back%s", dot.c_str());
-        timer++;
+        cpu_timer++;
     }
-    if(timer >= 1100) {
-        if(crack_successed){
-            std::string cracked_password = hashcat->getPassword();
-            ImGui::Text("Cracked Password: ");
+    if(cpu_timer >= 1100) {
+        if(dcu_crack_successed){
+            std::string cracked_password = dcu_crack->getPassword();
+            ImGui::Text("DCU Cracked Password: ");
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", cracked_password.c_str());
         }
         else
-            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "Cracked Failed!");
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "DCU Cracked Failed!");
+        if(cpu_crack_successed){
+            std::string cracked_password = cpu_crack->getPassword();
+            ImGui::Text("Intel CPU Cracked Password: ");
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", cracked_password.c_str());
+        }
+        else
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "Intel CPU Cracked Failed!");
     }
     ImGui::End();
 }
@@ -293,15 +411,26 @@ void CrackGUIShader:: showPasswordCrackResults(){
 void CrackGUIShader::shader(){
     while (!glfwWindowShouldClose(window)){
         shaderBegin();
-        setNextWindowFormat();
-        if(!input_complete)
+        if(!input_complete){
+            setNextWindowFormat();
             showPasswordInput();
-        setNextWindowFormat();
-        if(input_complete && !crack_finished)
-            showPasswordCrackProgress();
-        setNextWindowFormat();
-        if(input_complete && crack_finished)
+        }
+        if(input_complete && (!dcu_crack_finished || !cpu_crack_finished)){
+            setNextDCUCrackWindowFormat();
+            if(!dcu_crack_finished)
+                showDCUPasswordCrackProgress();
+            else
+                showDCUPasswordCrackFinished();
+            setNextIntelCPUCrackWindowFormat();
+            if(!cpu_crack_finished)
+                showIntelCPUPasswordCrackProgress();
+            else
+                showIntelCPUPasswordCrackFinished();
+        }
+        if(input_complete && dcu_crack_finished && cpu_crack_finished){
+            setNextWindowFormat();
             showPasswordCrackResults();
+        }
         shaderEnd();
     }
 }
@@ -318,6 +447,29 @@ void CrackGUIShader::setNextWindowFormat(){
     ImGui::SetNextWindowPos(ImVec2(window_pos_x, window_pos_y));
 }
 
+void CrackGUIShader::setNextDCUCrackWindowFormat(){
+    double dcu_occupy = (170.0f / 720.0f);
+    double ident_x = 0.05f;
+    double ident_y = 0.025f;
+    int window_size_x = (glfw_window_width * (1 - 3 * ident_x)) / 2;
+    int window_size_y = glfw_window_height * (1 - dcu_occupy) * (1 - 2 * ident_y);
+    int window_pos_x = glfw_window_width * ident_x;
+    int window_pos_y = glfw_window_height * (ident_y + dcu_occupy) ;
+    ImGui::SetNextWindowSize(ImVec2(window_size_x, window_size_y));
+    ImGui::SetNextWindowPos(ImVec2(window_pos_x, window_pos_y));
+}
+
+void CrackGUIShader::setNextIntelCPUCrackWindowFormat(){
+    double dcu_occupy = (170.0f / 720.0f);
+    double ident_x = 0.05f;
+    double ident_y = 0.025f;
+    int window_size_x = (glfw_window_width * (1 - 3 * ident_x)) / 2;
+    int window_size_y = glfw_window_height * (1 - dcu_occupy) * (1 - 2 * ident_y);
+    int window_pos_x = glfw_window_width * ident_x * 2 + window_size_x;
+    int window_pos_y = glfw_window_height * (ident_y + dcu_occupy) ;
+    ImGui::SetNextWindowSize(ImVec2(window_size_x, window_size_y));
+    ImGui::SetNextWindowPos(ImVec2(window_pos_x, window_pos_y));
+}
 
 // *******************************************************************************
 // **************** OpenGL Windows Shader Class Implementations ******************
