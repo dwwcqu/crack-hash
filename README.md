@@ -24,7 +24,7 @@
 ```bash
 sudo apt-get install libgl1-mesa-dev
 ```
-
+5. [Intel CPU OpenCL Runtime](https://registrationcenter-download.intel.com/akdlm/IRC_NAS/17206/intel_sdk_for_opencl_applications_2020.3.494.tar.gz) —— 该工具主要是与 DCU 破解过程进行对比，需要安装该工具
 ## *crack-hash* 的构建
 使用以下命令进行编译：
 ```bash
