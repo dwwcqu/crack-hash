@@ -207,7 +207,7 @@ void CrackGUIShader::showDCUPasswordCrackFinished(){
     ImGui::Text("Crack Level Progress:");
     ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
     ImGui::Text("Crack Progress:");
-    ImGui::ProgressBar(dcu_progress);
+    ImGui::BlockProgressBar(dcu_progress);
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "DCU Crack Success!");
     ImGui::End();
 }
@@ -235,21 +235,23 @@ void CrackGUIShader::showDCUPasswordCrackProgress() {
             }
         }
         // 根据不同的模式修改要破解的哈希值
-        hashcat_crack_struct args(dcu_crack, NULL, &type);
+        hashcat_crack_struct *args = new hashcat_crack_struct(dcu_crack, NULL, &type);
         if(crack_mode == 1)
-            args.hash_value = hash_input;
+            args->hash_value = hash_input;
         else
-            args.hash_value = dcu_hash_value.c_str();
+            args->hash_value = dcu_hash_value.c_str();
         pthread_attr_t pAttr;
         pthread_attr_init(&pAttr);
         pthread_attr_setdetachstate(&pAttr, PTHREAD_CREATE_DETACHED);
-        int ret = pthread_create(&dcu_crack_thread, NULL, hashcat_crack_hash, &args);
+        int ret = pthread_create(&dcu_crack_thread, &pAttr, hashcat_crack_hash, args);
+        usleep(2000);
         if(ret != 0){
             perror("pthread_create");
             shutdown();
             exit(-1);
         }
         pthread_attr_destroy(&pAttr);
+        delete args;
     }
     if((dcu_initlizing == dcu_crack->isInitilizing())){
         std::string dot(dcu_timer, '.');
@@ -260,7 +262,8 @@ void CrackGUIShader::showDCUPasswordCrackProgress() {
         ImGui::TextColored(ImVec4(1.0f, 0, 0, 1.0f), "No devices found/left");
         dcu_timer = 6;
     }
-    if(dcu_crack->isCracking() || dcu_crack->isExhausted()){
+    if(dcu_crack->isCracking() || dcu_crack->isExhausted() 
+            || (!dcu_initlizing && dcu_crack->isInitilizing())){
         auto guess_base = dcu_crack->get_guess_base();
         dcu_guess_base_offset = guess_base.first;
         dcu_guess_base_count = guess_base.second;
@@ -271,10 +274,10 @@ void CrackGUIShader::showDCUPasswordCrackProgress() {
         ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
         dcu_progress = dcu_crack->get_progress_percent() / 100;
         ImGui::Text("Crack Progress:");
-        ImGui::ProgressBar(dcu_progress);
+        ImGui::BlockProgressBar(dcu_progress);
         ImGui::Text("DCU Speed: ");
         ImGui::SameLine();
-        ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "%s", 
+        ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "%sHz/s", 
                             dcu_crack->get_backend_device_speed().c_str());
     }
     if((dcu_guess_base_offset == dcu_guess_base_count && ((int) dcu_progress) == 1) 
@@ -296,7 +299,7 @@ void CrackGUIShader::showIntelCPUPasswordCrackFinished(){
     ImGui::Text("Crack Level Progress:");
     ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
     ImGui::Text("Crack Progress:");
-    ImGui::ProgressBar(cpu_progress);
+    ImGui::BlockProgressBar(cpu_progress);
     ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Intel CPU Crack Success!");
     ImGui::End();
 }
@@ -333,7 +336,8 @@ void CrackGUIShader::showIntelCPUPasswordCrackProgress() {
         pthread_attr_t pAttr;
         pthread_attr_init(&pAttr);
         pthread_attr_setdetachstate(&pAttr, PTHREAD_CREATE_DETACHED);
-        int ret = pthread_create(&cpu_crack_thread, NULL, hashcat_crack_hash, &args);
+        int ret = pthread_create(&cpu_crack_thread, &pAttr, hashcat_crack_hash, &args);
+        usleep(2000);
         if(ret != 0){
             perror("pthread_create");
             shutdown();
@@ -350,7 +354,8 @@ void CrackGUIShader::showIntelCPUPasswordCrackProgress() {
         ImGui::TextColored(ImVec4(1.0f, 0, 0, 1.0f), "No devices found/left");
         cpu_timer = 6;
     }
-    if(cpu_crack->isCracking()|| cpu_crack->isExhausted()){
+    if(cpu_crack->isCracking()|| cpu_crack->isExhausted()
+        || (!cpu_initlizing && cpu_crack->isInitilizing())){
         auto guess_base = cpu_crack->get_guess_base();
         cpu_guess_base_offset = guess_base.first;
         cpu_guess_base_count = guess_base.second;
@@ -361,10 +366,10 @@ void CrackGUIShader::showIntelCPUPasswordCrackProgress() {
         ImGui::ProgressBar(guess_base_progress, ImVec2(0.0f, 0.0f), buf);
         cpu_progress = cpu_crack->get_progress_percent() / 100;
         ImGui::Text("Crack Progress:");
-        ImGui::ProgressBar(cpu_progress);
+        ImGui::BlockProgressBar(cpu_progress);
         ImGui::Text("Intel CPU Speed: ");
         ImGui::SameLine();
-        ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "%s", 
+        ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "%sHz/s", 
                             cpu_crack->get_backend_device_speed().c_str());
     }
     if((cpu_guess_base_offset == cpu_guess_base_count && ((int) cpu_progress) == 1) 
@@ -392,6 +397,9 @@ void CrackGUIShader:: showPasswordCrackResults(){
             ImGui::Text("DCU Cracked Password: ");
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", cracked_password.c_str());
+            ImGui::Text("DCU Crack Consume Time: ");
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", dcu_crack->get_total_time_consume().c_str());
         }
         else
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "DCU Cracked Failed!");
@@ -400,6 +408,9 @@ void CrackGUIShader:: showPasswordCrackResults(){
             ImGui::Text("Intel CPU Cracked Password: ");
             ImGui::SameLine();
             ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", cracked_password.c_str());
+            ImGui::Text("Intel CPU Crack Consume Time: ");
+            ImGui::SameLine();
+            ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%s", cpu_crack->get_total_time_consume().c_str());
         }
         else
             ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", "Intel CPU Cracked Failed!");

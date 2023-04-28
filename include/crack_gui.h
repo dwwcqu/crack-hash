@@ -45,7 +45,6 @@ public:
     DCUCrackHash *dcu_crack;            // DCU crack
     IntelCPUCrackHash *cpu_crack;       // Intel CPU crack
     // input windows control variables
-    bool buttoned = false;
     bool hash_correct_input = true;
     bool password_correct_input = true;
     bool input_complete = false;            // 指示输入窗口的所有工作是否完成
