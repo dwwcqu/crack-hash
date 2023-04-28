@@ -1271,6 +1271,56 @@ bool ImGui::RadioButton(const char* label, int* v, int v_button)
     return pressed;
 }
 
+// block progress bar
+void  ImGui::BlockProgressBar(float fraction, const ImVec2& size_arg, const char* overlay)
+{
+    ImGuiWindow* window = GetCurrentWindow();
+    if (window->SkipItems)
+        return;
+
+    ImGuiContext& g = *GImGui;
+    const ImGuiStyle& style = g.Style;
+
+    ImVec2 pos = window->DC.CursorPos;
+    ImVec2 size = CalcItemSize(size_arg, CalcItemWidth(), g.FontSize + style.FramePadding.y * 2.0f);
+    ImRect bb(pos, pos + size);
+    ItemSize(size, style.FramePadding.y);
+    if (!ItemAdd(bb, 0))
+        return;
+
+    // Render
+    fraction = ImSaturate(fraction);
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+    RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
+    bb.Expand(ImVec2(-style.FrameBorderSize, -style.FrameBorderSize));
+    const ImVec2 fill_br = ImVec2(ImLerp(bb.Min.x, bb.Max.x, fraction), bb.Max.y);
+    int block_num = 40;
+    float block_width = 1.0 / block_num;
+    float color_block_width = 0.75 * block_width;
+    int x = (int) (fraction / block_width);
+    for(int i = 0; i <= x; ++i){
+        float pos = i * block_width + color_block_width;
+        if(fraction >= pos)
+            RenderRectFilledRangeH(window->DrawList, bb, GetColorU32(ImGuiCol_PlotHistogram), 
+                                i * block_width, i * block_width + color_block_width, style.FrameRounding);
+    }
+
+    // Default displaying the fraction as percentage string, but user can override it
+    char overlay_buf[32];
+    if (!overlay)
+    {
+        ImFormatString(overlay_buf, IM_ARRAYSIZE(overlay_buf), "%.0f%%", fraction * 100 + 0.01f);
+        overlay = overlay_buf;
+    }
+
+    ImVec2 overlay_size = CalcTextSize(overlay, NULL);
+    if (overlay_size.x > 0.0f)
+        RenderTextClipped(ImVec2(ImClamp(fill_br.x + style.ItemSpacing.x, bb.Min.x, bb.Max.x - overlay_size.x - style.ItemInnerSpacing.x), bb.Min.y), bb.Max, overlay, NULL, &overlay_size, ImVec2(0.0f, 0.5f), &bb);
+    ImGui::PopStyleColor(3);
+}
+
 // size_arg (for each axis) < 0.0f: align to end, 0.0f: auto, > 0.0f: specified size
 void ImGui::ProgressBar(float fraction, const ImVec2& size_arg, const char* overlay)
 {
@@ -1289,6 +1339,9 @@ void ImGui::ProgressBar(float fraction, const ImVec2& size_arg, const char* over
         return;
 
     // Render
+    ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
     fraction = ImSaturate(fraction);
     RenderFrame(bb.Min, bb.Max, GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
     bb.Expand(ImVec2(-style.FrameBorderSize, -style.FrameBorderSize));
@@ -1306,6 +1359,7 @@ void ImGui::ProgressBar(float fraction, const ImVec2& size_arg, const char* over
     ImVec2 overlay_size = CalcTextSize(overlay, NULL);
     if (overlay_size.x > 0.0f)
         RenderTextClipped(ImVec2(ImClamp(fill_br.x + style.ItemSpacing.x, bb.Min.x, bb.Max.x - overlay_size.x - style.ItemInnerSpacing.x), bb.Min.y), bb.Max, overlay, NULL, &overlay_size, ImVec2(0.0f, 0.5f), &bb);
+    ImGui::PopStyleColor(3);
 }
 
 void ImGui::Bullet()
