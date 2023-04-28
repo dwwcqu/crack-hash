@@ -5,6 +5,7 @@
  */
 #include <string>
 #include <utility>
+#include <time.h>
 #include "types.h"
 
 enum CRACK_ALGO_TYPE{
@@ -30,6 +31,9 @@ public:
     std::pair<int, int> get_guess_base();
     double get_progress_percent();
     std::string get_backend_device_speed();
+    std::string get_total_time_consume();
+    time_t crack_begin;                         // crack 起始时间
+    time_t crack_end;                           // crack 终止时间
 
 protected:
     void init();
@@ -48,6 +52,7 @@ class DCUCrackHash : public CrackHash{
 public:
     DCUCrackHash(const std::string &filename = "dcu_result.txt");
     void crack(const char *hash_value, CRACK_ALGO_TYPE type);
+    ~DCUCrackHash();
 protected:
     void init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type);
 };
@@ -55,6 +60,7 @@ protected:
 class IntelCPUCrackHash : public CrackHash{
 public:
     IntelCPUCrackHash(const std::string &filename = "cpu_result.txt");
+    ~IntelCPUCrackHash();
     void crack(const char *hash_value, CRACK_ALGO_TYPE type);
 protected:
     void init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type);

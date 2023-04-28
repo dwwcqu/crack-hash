@@ -142,15 +142,28 @@ std::string CrackHash::get_backend_device_speed(){
     return {speed_string};
 }
 
+std::string CrackHash::get_total_time_consume(){
+    time_t use = crack_end - crack_begin;
+    struct tm tmp;
+    struct tm *tmp_ptr;
+    tmp_ptr = gmtime_r (&use, &tmp);
+    char buf[30];
+    format_timer_display(tmp_ptr, buf, sizeof(buf));
+    return {buf};
+}
+
 DCUCrackHash::DCUCrackHash(const std::string &filename) : CrackHash(filename){
 
 }
+DCUCrackHash::~DCUCrackHash(){}
 
 IntelCPUCrackHash::IntelCPUCrackHash(const std::string &filename) : CrackHash(filename){
     
 }
 
- void DCUCrackHash::init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type){
+IntelCPUCrackHash::~IntelCPUCrackHash(){}
+
+void DCUCrackHash::init_hashcat_options(const char *hash_value, CRACK_ALGO_TYPE type){
     const char *hash_mode;
     if(type == CRACK_ALGO_TYPE_MD5)
         hash_mode = "0";
@@ -248,7 +261,9 @@ void DCUCrackHash::crack(const char *hash_value, CRACK_ALGO_TYPE type){
     if (hashcat_session_init (hashcat_ctx, install_folder, shared_folder, argc, argv, COMPTIME) == 0){
         backend_info_compact (hashcat_ctx);
         user_options_info (hashcat_ctx);
+        time(&crack_begin);
         rc_final = hashcat_session_execute (hashcat_ctx);
+        time(&crack_end);
     }
     if(rc_final == -1)
         m_cracked = false;
@@ -266,7 +281,9 @@ void IntelCPUCrackHash::crack(const char *hash_value, CRACK_ALGO_TYPE type){
     if (hashcat_session_init (hashcat_ctx, install_folder, shared_folder, argc, argv, COMPTIME) == 0){
         backend_info_compact (hashcat_ctx);
         user_options_info (hashcat_ctx);
+        time(&crack_begin);
         rc_final = hashcat_session_execute (hashcat_ctx);
+        time(&crack_end);
     }
     if(rc_final == -1)
         m_cracked = false;
